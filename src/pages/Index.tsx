@@ -1,48 +1,48 @@
-import { Shield, ArrowRight, TrendingUp, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Shield, ArrowRight, TrendingUp, ExternalLink, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
 
-const trendingNews = [
-  {
-    title: "AI-Generated Deepfakes Surge in 2025 Elections",
-    source: "Reuters",
-    searches: "2.4M",
-    category: "Politics",
-  },
-  {
-    title: "Miracle Drug Claims Flood Social Media Platforms",
-    source: "AP News",
-    searches: "1.8M",
-    category: "Health",
-  },
-  {
-    title: "Viral Climate Change Denial Post Debunked by Scientists",
-    source: "BBC",
-    searches: "1.5M",
-    category: "Science",
-  },
-  {
-    title: "Celebrity Death Hoax Spreads Across WhatsApp Groups",
-    source: "Snopes",
-    searches: "1.2M",
-    category: "Entertainment",
-  },
-  {
-    title: "Fake Investment Schemes Target Young Adults Online",
-    source: "FactCheck.org",
-    searches: "980K",
-    category: "Finance",
-  },
-  {
-    title: "Manipulated War Footage Goes Viral on Social Media",
-    source: "AFP",
-    searches: "870K",
-    category: "World",
-  },
+interface TrendingItem {
+  title: string;
+  source: string;
+  url: string;
+  description: string;
+  category: string;
+}
+
+const fallbackNews: TrendingItem[] = [
+  { title: "AI-Generated Deepfakes Surge in 2025 Elections", source: "reuters.com", url: "#", description: "", category: "Politics" },
+  { title: "Miracle Drug Claims Flood Social Media", source: "apnews.com", url: "#", description: "", category: "Health" },
+  { title: "Climate Change Denial Post Debunked", source: "bbc.com", url: "#", description: "", category: "Science" },
+  { title: "Celebrity Death Hoax Spreads Online", source: "snopes.com", url: "#", description: "", category: "Entertainment" },
+  { title: "Fake Investment Schemes Target Youth", source: "factcheck.org", url: "#", description: "", category: "Finance" },
+  { title: "Manipulated War Footage Goes Viral", source: "afp.com", url: "#", description: "", category: "World" },
 ];
 
 const Index = () => {
+  const [trending, setTrending] = useState<TrendingItem[]>(fallbackNews);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("trending-news");
+        if (error) throw error;
+        if (data?.results?.length > 0) {
+          setTrending(data.results);
+        }
+      } catch (e) {
+        console.error("Failed to fetch trending:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTrending();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -81,14 +81,18 @@ const Index = () => {
             </div>
             <div>
               <h2 className="font-display font-bold text-2xl text-foreground">Trending Searches</h2>
-              <p className="text-sm text-muted-foreground">Top 6 most searched news topics being fact-checked right now</p>
+              <p className="text-sm text-muted-foreground">Today's most searched news topics being fact-checked</p>
             </div>
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />}
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {trendingNews.map((item, i) => (
-              <div
+            {trending.map((item, i) => (
+              <a
                 key={i}
+                href={item.url !== "#" ? item.url : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.08)] flex flex-col justify-between"
               >
                 <div>
@@ -104,9 +108,8 @@ const Index = () => {
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                   <span className="text-xs text-muted-foreground font-mono">{item.source}</span>
-                  <span className="text-xs font-mono text-primary">{item.searches} searches</span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>
