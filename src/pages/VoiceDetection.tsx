@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback } from "react";
-import { Mic, MicOff, Square, Loader2 } from "lucide-react";
+import { Mic, MicOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ResultCard from "@/components/ResultCard";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const LANGUAGES = [
   { code: "", label: "Auto-detect" },
@@ -30,7 +32,7 @@ const LANGUAGES = [
 const VoiceDetection = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [selectedLang, setSelectedLang] = useState("");
+  const [selectedLang, setSelectedLang] = useState("en-US");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<{
     prediction: string;
@@ -39,6 +41,7 @@ const VoiceDetection = () => {
   } | null>(null);
   const [error, setError] = useState("");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { toast } = useToast();
 
   const startRecording = useCallback(() => {
     setError("");
@@ -54,43 +57,52 @@ const VoiceDetection = () => {
       return;
     }
 
-    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    if (selectedLang) {
-      recognition.lang = selectedLang;
-    }
+    // Request microphone permission first
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+      const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = selectedLang || "en-US";
 
-    let finalTranscript = "";
+      let finalTranscript = "";
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += t + " ";
-        } else {
-          interim = t;
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += t + " ";
+          } else {
+            interim = t;
+          }
         }
-      }
-      setTranscript(finalTranscript + interim);
-    };
+        setTranscript(finalTranscript + interim);
+      };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error !== "aborted") {
-        setError(`Speech recognition error: ${event.error}`);
-      }
-      setIsRecording(false);
-    };
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === "not-allowed") {
+          setError("Microphone access denied. Please allow microphone access in your browser settings.");
+        } else if (event.error === "no-speech") {
+          setError("No speech detected. Please try speaking louder or closer to the microphone.");
+        } else if (event.error !== "aborted") {
+          setError(`Speech recognition error: ${event.error}. Try selecting a specific language instead of auto-detect.`);
+        }
+        setIsRecording(false);
+      };
 
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
 
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsRecording(true);
-    setTranscript("");
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsRecording(true);
+      setTranscript("");
+    }).catch((err) => {
+      console.error("Microphone access error:", err);
+      setError("Microphone access denied. Please allow microphone access and try again.");
+    });
   }, [selectedLang]);
 
   const stopRecording = useCallback(() => {
@@ -101,40 +113,40 @@ const VoiceDetection = () => {
     setIsRecording(false);
   }, []);
 
-  const analyzeVoice = () => {
+  const analyzeVoice = async () => {
     const trimmed = transcript.trim();
     if (!trimmed) return;
 
     setIsProcessing(true);
+    setResult(null);
 
-    setTimeout(() => {
-      let prediction = "";
-      let uncertainty = "";
-      let reasons: string[] = [];
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("analyze-news", {
+        body: { text: trimmed, type: "voice" },
+      });
 
-      if (trimmed.length < 50) {
-        prediction = "Uncertain";
-        uncertainty = "Uncertainty: 60%";
-        reasons = [
-          "Voice input is too short for reliable analysis",
-          "Insufficient contextual information available",
-          "Source credibility cannot be determined",
-        ];
-      } else if (
-        trimmed.toLowerCase().includes("shocking") ||
-        trimmed.toLowerCase().includes("breaking") ||
-        trimmed.toLowerCase().includes("click here")
-      ) {
-        prediction = "Fake News";
-        uncertainty = "Uncertainty: 15%";
-      } else {
-        prediction = "True News";
-        uncertainty = "Uncertainty: 20%";
+      if (fnError) throw fnError;
+
+      if (data?.error) {
+        toast({ title: "Error", description: data.error, variant: "destructive" });
+        return;
       }
 
-      setResult({ prediction, uncertainty, reasons });
+      setResult({
+        prediction: data.prediction || "Uncertain",
+        uncertainty: `Confidence: ${data.confidence || 50}%`,
+        reasons: data.reasons || [],
+      });
+    } catch (e) {
+      console.error("Analysis failed:", e);
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze voice input. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
-    }, 800);
+    }
   };
 
   return (
@@ -147,7 +159,7 @@ const VoiceDetection = () => {
           </h1>
           <p className="text-muted-foreground">
             Speak in any language — we'll transcribe and analyze it for
-            misinformation.
+            misinformation using AI.
           </p>
         </div>
 

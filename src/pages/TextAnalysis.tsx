@@ -1,47 +1,56 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ResultCard from "@/components/ResultCard";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const TextAnalysis = () => {
   const [text, setText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{
     prediction: string;
     uncertainty: string;
     reasons: string[];
   } | null>(null);
+  const { toast } = useToast();
 
-  const analyzeText = () => {
+  const analyzeText = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    let prediction = "";
-    let uncertainty = "";
-    let reasons: string[] = [];
+    setIsLoading(true);
+    setResult(null);
 
-    if (trimmed.length < 50) {
-      prediction = "Uncertain";
-      uncertainty = "Uncertainty: 60%";
-      reasons = [
-        "Text length is too short for reliable analysis",
-        "Insufficient contextual information available",
-        "Source credibility cannot be determined",
-      ];
-    } else if (
-      trimmed.toLowerCase().includes("shocking") ||
-      trimmed.toLowerCase().includes("breaking") ||
-      trimmed.toLowerCase().includes("click here")
-    ) {
-      prediction = "Fake News";
-      uncertainty = "Uncertainty: 15%";
-    } else {
-      prediction = "True News";
-      uncertainty = "Uncertainty: 20%";
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-news", {
+        body: { text: trimmed, type: "text" },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        toast({ title: "Error", description: data.error, variant: "destructive" });
+        return;
+      }
+
+      setResult({
+        prediction: data.prediction || "Uncertain",
+        uncertainty: `Confidence: ${data.confidence || 50}%`,
+        reasons: data.reasons || [],
+      });
+    } catch (e) {
+      console.error("Analysis failed:", e);
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze the text. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setResult({ prediction, uncertainty, reasons });
   };
 
   return (
@@ -53,7 +62,7 @@ const TextAnalysis = () => {
             Text Analysis
           </h1>
           <p className="text-muted-foreground">
-            Paste any news article or claim to analyze its authenticity.
+            Paste any news article or claim to analyze its authenticity using AI.
           </p>
         </div>
 
@@ -67,11 +76,20 @@ const TextAnalysis = () => {
 
           <Button
             onClick={analyzeText}
-            disabled={!text.trim()}
+            disabled={!text.trim() || isLoading}
             className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-display font-semibold"
           >
-            <Search className="h-4 w-4" />
-            Analyze Text
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing…
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                Analyze Text
+              </>
+            )}
           </Button>
         </div>
 
