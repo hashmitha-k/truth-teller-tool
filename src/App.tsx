@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import TextAnalysis from "./pages/TextAnalysis";
 import OcrDetection from "./pages/OcrDetection";
+import VoiceDetection from "./pages/VoiceDetection";
 import Articles from "./pages/Articles";
 import NotFound from "./pages/NotFound";
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/text" element={<TextAnalysis />} />
           <Route path="/ocr" element={<OcrDetection />} />
+          <Route path="/voice" element={<VoiceDetection />} />
           <Route path="/articles" element={<Articles />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

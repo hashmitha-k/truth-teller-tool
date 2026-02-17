@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { Shield, FileText, ScanSearch, Newspaper } from "lucide-react";
+import { Shield, FileText, ScanSearch, Newspaper, Mic } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home", icon: Shield },
   { to: "/text", label: "Text Analysis", icon: FileText },
   { to: "/ocr", label: "OCR Detection", icon: ScanSearch },
+  { to: "/voice", label: "Voice Detection", icon: Mic },
   { to: "/articles", label: "Articles", icon: Newspaper },
 ];
 

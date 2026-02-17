@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Shield, FileText, ScanSearch, Newspaper, ArrowRight } from "lucide-react";
+import { Shield, FileText, ScanSearch, Newspaper, ArrowRight, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 
@@ -15,6 +15,12 @@ const features = [
     title: "OCR Detection",
     description: "Upload images of news articles for optical character recognition analysis.",
     to: "/ocr",
+  },
+  {
+    icon: Mic,
+    title: "Voice Detection",
+    description: "Speak in any language and detect misinformation from your voice input.",
+    to: "/voice",
   },
   {
     icon: Newspaper,
