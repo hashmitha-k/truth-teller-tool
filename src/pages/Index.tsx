@@ -1,32 +1,44 @@
+import { Shield, ArrowRight, TrendingUp, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Shield, FileText, ScanSearch, Newspaper, ArrowRight, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 
-const features = [
+const trendingNews = [
   {
-    icon: FileText,
-    title: "Text Analysis",
-    description: "Paste any text and detect fake news using keyword and pattern analysis.",
-    to: "/text",
+    title: "AI-Generated Deepfakes Surge in 2025 Elections",
+    source: "Reuters",
+    searches: "2.4M",
+    category: "Politics",
   },
   {
-    icon: ScanSearch,
-    title: "OCR Detection",
-    description: "Upload images of news articles for optical character recognition analysis.",
-    to: "/ocr",
+    title: "Miracle Drug Claims Flood Social Media Platforms",
+    source: "AP News",
+    searches: "1.8M",
+    category: "Health",
   },
   {
-    icon: Mic,
-    title: "Voice Detection",
-    description: "Speak in any language and detect misinformation from your voice input.",
-    to: "/voice",
+    title: "Viral Climate Change Denial Post Debunked by Scientists",
+    source: "BBC",
+    searches: "1.5M",
+    category: "Science",
   },
   {
-    icon: Newspaper,
-    title: "Articles",
-    description: "Browse curated resources on media literacy and misinformation.",
-    to: "/articles",
+    title: "Celebrity Death Hoax Spreads Across WhatsApp Groups",
+    source: "Snopes",
+    searches: "1.2M",
+    category: "Entertainment",
+  },
+  {
+    title: "Fake Investment Schemes Target Young Adults Online",
+    source: "FactCheck.org",
+    searches: "980K",
+    category: "Finance",
+  },
+  {
+    title: "Manipulated War Footage Goes Viral on Social Media",
+    source: "AFP",
+    searches: "870K",
+    category: "World",
   },
 ];
 
@@ -61,21 +73,40 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Features */}
+        {/* Trending News */}
         <section className="max-w-6xl mx-auto px-6 pb-24">
-          <div className="grid md:grid-cols-3 gap-6">
-            {features.map((f) => (
-              <Link
-                key={f.to}
-                to={f.to}
-                className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.08)]"
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display font-bold text-2xl text-foreground">Trending Searches</h2>
+              <p className="text-sm text-muted-foreground">Top 6 most searched news topics being fact-checked right now</p>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trendingNews.map((item, i) => (
+              <div
+                key={i}
+                className="group p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.08)] flex flex-col justify-between"
               >
-                <div className="p-3 rounded-lg bg-primary/10 text-primary w-fit mb-4 group-hover:bg-primary/15 transition-colors">
-                  <f.icon className="h-5 w-5" />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {item.category}
+                    </span>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <h3 className="font-display font-semibold text-foreground mb-2 leading-snug">
+                    {item.title}
+                  </h3>
                 </div>
-                <h3 className="font-display font-semibold text-foreground mb-2">{f.title}</h3>
-                <p className="text-sm text-muted-foreground">{f.description}</p>
-              </Link>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                  <span className="text-xs text-muted-foreground font-mono">{item.source}</span>
+                  <span className="text-xs font-mono text-primary">{item.searches} searches</span>
+                </div>
+              </div>
             ))}
           </div>
         </section>
