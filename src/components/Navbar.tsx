@@ -11,7 +11,7 @@ const links = [
 
 const Navbar = () => {
   return (
-    <nav className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
+    <nav className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
         <div className="flex items-center gap-2">
           <Shield className="h-6 w-6 text-primary" />
