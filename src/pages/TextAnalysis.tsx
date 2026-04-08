@@ -61,9 +61,18 @@ const TextAnalysis = () => {
           <h1 className="font-display font-bold text-3xl md:text-4xl text-foreground mb-2">
             Text Analysis
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Paste any news article or claim to analyze its authenticity using AI.
           </p>
+          <div className="p-4 rounded-lg bg-muted border border-border text-sm text-muted-foreground space-y-1">
+            <p className="font-semibold text-foreground">💡 Tips for best results:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Paste a <strong>complete headline or paragraph</strong> from a news article</li>
+              <li>Include <strong>specific details</strong> like names, dates, and events</li>
+              <li>Longer text with context gives more accurate results</li>
+              <li>Example: <em>"NASA's Perseverance rover successfully collected its first Mars rock sample on August 6, 2025"</em></li>
+            </ul>
+          </div>
         </div>
 
         <div className="space-y-4">
