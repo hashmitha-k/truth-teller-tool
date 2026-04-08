@@ -22,7 +22,14 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are a fake news detection expert. Analyze the following ${type === "ocr" ? "text extracted from an image" : type === "voice" ? "transcribed speech" : "news text"} and determine if it is likely true news, fake news, or uncertain.
+    const systemPrompt = `You are a fake news detection expert. Analyze the following ${type === "ocr" ? "text extracted from an image" : type === "voice" ? "transcribed speech" : "news text"} and classify it.
+
+IMPORTANT CLASSIFICATION RULES:
+- If the news sounds plausible, uses professional language, and matches real-world events or common reporting patterns, classify it as "True News" even without a source URL.
+- Only classify as "Fake News" if there are CLEAR signs: conspiracy theories, impossible claims, known hoaxes, pseudoscience, extreme sensationalism, or verifiably false statements.
+- Only classify as "Uncertain" if the text is genuinely ambiguous — a mix of credible and suspicious elements. Do NOT default to Uncertain just because a source is missing.
+- Short news snippets from live matches, press conferences, or breaking events are typically TRUE — they don't need citations to be credible.
+- Use your training knowledge to verify facts when possible. If something aligns with known events, say "True News".
 
 You MUST respond with valid JSON in this exact format (no markdown, no extra text):
 {
@@ -31,14 +38,13 @@ You MUST respond with valid JSON in this exact format (no markdown, no extra tex
   "reasons": ["reason1", "reason2", "reason3"]
 }
 
-Consider these factors:
-- Sensationalist or clickbait language
-- Unverifiable or extraordinary claims
+Evaluate based on:
+- Does the claim match known real-world events or plausible scenarios?
+- Sensationalist or clickbait language patterns
+- Extraordinary claims that defy science or logic
 - Emotional manipulation tactics
-- Lack of credible sources
-- Logical consistency
-- Known misinformation patterns
-- Whether the claims are factually verifiable`;
+- Known misinformation or conspiracy patterns
+- Logical consistency of the statements`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
